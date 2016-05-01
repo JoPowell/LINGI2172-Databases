@@ -1,0 +1,86 @@
+-- Database: "M4Database"
+
+-- DROP DATABASE "M4Database";
+
+CREATE DATABASE "M4Database"
+  WITH OWNER = postgres
+       ENCODING = 'UTF8'
+       TABLESPACE = pg_default
+       LC_COLLATE = 'French_Belgium.1252'
+       LC_CTYPE = 'French_Belgium.1252'
+       CONNECTION LIMIT = -1;
+       
+CREATE TABLE client (
+    token INTEGER NOT NULL PRIMARY KEY,
+    tableID INTEGER NOT NULL
+);
+
+CREATE TABLE tables (
+    tableID INTEGER NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE orders (
+    orderID INTEGER NOT NULL PRIMARY KEY,
+    token INTEGER NOT NULL,
+    orderTime TIMESTAMP NOT NULL
+);
+
+CREATE TABLE orderedDrink (
+    orderID INTEGER NOT NULL,
+    drinkID INTEGER NOT NULL,
+    qty INTEGER NOT NULL CONSTRAINT positive_qty CHECK (qty > -1),
+    PRIMARY KEY(orderID, drinkID)
+);
+
+CREATE TABLE drink (
+    drinkID INTEGER PRIMARY KEY,
+    price FLOAT NOT NULL CONSTRAINT positive_price CHECK (price > -1), 
+    name NAME NOT NULL,
+    description VARCHAR NOT NULL
+);
+
+CREATE TABLE payment (
+    paymentID INTEGER NOT NULL PRIMARY KEY,
+    token INTEGER NOT NULL,
+    amountPaid FLOAT NOT NULL CONSTRAINT positive_amountPaid CHECK (amountPaid > -1)
+);
+
+-- Foreign Keys
+
+ALTER TABLE client ADD CONSTRAINT existing_table FOREIGN KEY (tableID) REFERENCES tables(tableID);
+ALTER TABLE orders ADD CONSTRAINT existing_client FOREIGN KEY (token) REFERENCES client(token);
+ALTER TABLE payment ADD CONSTRAINT acceptable_payment FOREIGN KEY (token) REFERENCES client(token);
+ALTER TABLE orderedDrink ADD CONSTRAINT acceptable_order FOREIGN KEY (orderID) REFERENCES orders(orderID);
+ALTER TABLE orderedDrink ADD CONSTRAINT acceptable_drink FOREIGN KEY (drinkID) REFERENCES drink(drinkID);
+
+-- Fill database
+
+INSERT INTO tables (tableID) VALUES
+(1), (2), (3);
+
+INSERT INTO client (token, tableID) VALUES
+(478,1), (479, 2), (480, 3);
+
+INSERT INTO drink (drinkID, price, name, description) VALUES
+(1, 2.75, 'Coffee', 'Brewed drink prepared from roasted coffee beans, which are the seeds of berries from the Coffea plant.'),
+(2, 3.60, 'Milk-shake', 'Cold beverage which is usually made from milk, ice cream, or iced milk, and flavorings or sweeteners such as butterscotch, caramel sauce, chocolate sauce, or fruit syrup.'),
+(3, 2.00, 'Beer', 'The production of beer is called brewing, which involves the fermentation of starches, mainly derived from cereal grains—most commonly malted barley'),
+(4, 1.23, 'Water', 'Transparent fluid which forms the world s streams, lakes, oceans and rain, and is the major constituent of the fluids of organisms.'),
+(5, 3.27, 'Tea', 'Aromatic beverage commonly prepared by pouring hot or boiling water over cured leaves of the Camellia sinensis.');
+
+INSERT INTO orders (orderID, token, orderTime) VALUES
+(1, 478, '1999-01-08 04:05:06'),
+(2, 478, '1999-02-14 04:55:15'),
+(3, 479, '2014-01-13 13:12:48'),
+(4, 479, '2015-08-07 20:37:02');
+
+INSERT INTO orderedDrink (orderID, drinkID, qty) VALUES
+(1, 2, 1),
+(2, 1, 1),
+(3, 5, 5),
+(4, 3, 3),
+(4, 4, 1);
+
+INSERT INTO payment (paymentID, token, amountPaid) VALUES
+(1, 478, 6.35),
+(2, 479, 16.35);
