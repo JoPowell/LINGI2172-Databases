@@ -1,8 +1,8 @@
-DROP TABLE IF EXISTS clients CASCADE;
+﻿DROP TABLE IF EXISTS clients CASCADE;
 DROP TABLE IF EXISTS tables CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS orderedDrink;
-DROP TABLE IF EXISTS drink;
+DROP TABLE IF EXISTS drinks;
 DROP TABLE IF EXISTS payments;
 
 CREATE TABLE clients (
@@ -12,7 +12,7 @@ CREATE TABLE clients (
 
 COMMENT ON TABLE clients IS'
     Each client is identified with the unique token `token` which 
-    is associated with the table `tableid` when scanning the table 
+    is associated with the table `table` when scanning the table 
 ';
 
 CREATE TABLE tables (
@@ -21,7 +21,7 @@ CREATE TABLE tables (
 );
 
 COMMENT ON TABLE tables IS '   
-    Table `table` is associated with the codebar ´codebar´
+    Table `tableid` is associated with the codebar ´codebar´
 ';
 
 CREATE TABLE orders (
@@ -47,14 +47,14 @@ COMMENT ON TABLE orderedDrink IS'
     by the order `order`
 ';
 
-CREATE TABLE drink (
+CREATE TABLE drinks (
     "drinkid" INTEGER PRIMARY KEY,
     "price" FLOAT NOT NULL CONSTRAINT positive_price CHECK ("price" > -1), 
     "name" NAME NOT NULL,
     "description" VARCHAR NOT NULL 
 );
 
-COMMENT ON TABLE drink IS'
+COMMENT ON TABLE drinks IS'
     Drink `drink` named `name` is serve at the price `price` and
     have an explain description `description`
 ';
@@ -70,8 +70,8 @@ COMMENT ON TABLE payments IS'
     the client associated with the token `token`
 ';
 
-ALTER TABLE client ADD CONSTRAINT fk_client FOREIGN KEY ("tableID") REFERENCES tables("tableID");
-ALTER TABLE orders ADD CONSTRAINT fk_orders FOREIGN KEY ("token") REFERENCES client("token");
-ALTER TABLE payment ADD CONSTRAINT fk_payment FOREIGN KEY ("token") REFERENCES client("token");
-ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_order FOREIGN KEY ("orderID") REFERENCES orders("orderID");
-ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_drink FOREIGN KEY ("drinkID") REFERENCES drink("drinkID");
+ALTER TABLE clients ADD CONSTRAINT fk_clients FOREIGN KEY ("table") REFERENCES tables("tableid");
+ALTER TABLE orders ADD CONSTRAINT fk_orders FOREIGN KEY ("token") REFERENCES clients("token");
+ALTER TABLE payments ADD CONSTRAINT fk_payments FOREIGN KEY ("token") REFERENCES clients("token");
+ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_order FOREIGN KEY ("order") REFERENCES orders("orderid");
+ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_drink FOREIGN KEY ("drink") REFERENCES drinks("drinkid");

@@ -5,8 +5,8 @@
 */
 
 DROP FUNCTION IF EXISTS is_table_free(tableid INTEGER);
-DROP trigger before_insert_client on clients;
-DROP FUNCTION before_insert_client();
+DROP trigger IF EXISTS before_insert_clients on clients;
+DROP FUNCTION IF EXISTS before_insert_clients();
 
 /*
 *
@@ -59,7 +59,7 @@ $is_table_free$ LANGUAGE plpgsql;
 *
 */
 
-CREATE FUNCTION before_insert_client() RETURNS trigger AS $before_insert_client$
+CREATE FUNCTION before_insert_clients() RETURNS trigger AS $before_insert_clients$
     BEGIN
         -- Check tableID
         IF NEW.table IS NULL THEN
@@ -76,7 +76,7 @@ CREATE FUNCTION before_insert_client() RETURNS trigger AS $before_insert_client$
 
         RETURN NEW;
     END;
-$before_insert_client$ LANGUAGE plpgsql;
+$before_insert_clients$ LANGUAGE plpgsql;
 
 /*
 * 
@@ -84,8 +84,8 @@ $before_insert_client$ LANGUAGE plpgsql;
 * 
 */
 
-CREATE TRIGGER before_insert_client BEFORE INSERT ON clients
-    FOR EACH ROW EXECUTE PROCEDURE before_insert_client();
+CREATE TRIGGER before_insert_clients BEFORE INSERT ON clients
+    FOR EACH ROW EXECUTE PROCEDURE before_insert_clients();
 
 
 /*
