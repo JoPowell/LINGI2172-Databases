@@ -75,3 +75,4 @@ ALTER TABLE orders ADD CONSTRAINT fk_orders FOREIGN KEY ("token") REFERENCES cli
 ALTER TABLE payments ADD CONSTRAINT fk_payments FOREIGN KEY ("token") REFERENCES clients("token");
 ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_order FOREIGN KEY ("order") REFERENCES orders("orderid");
 ALTER TABLE orderedDrink ADD CONSTRAINT fk_orderedDrink_drink FOREIGN KEY ("drink") REFERENCES drinks("drinkid");
+

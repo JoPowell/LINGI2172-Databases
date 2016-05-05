@@ -4,15 +4,43 @@
 *
 */
 
+-- Function
 DROP FUNCTION IF EXISTS is_table_free(tableid INTEGER);
+DROP FUNCTION IF EXISTS is_valid_token(tokenclient INTEGER);
+
+-- Senario Function
+DROP FUNCTION IF EXISTS AcquireTable(code INTEGER);
+DROP FUNCTION IF EXISTS OrderDrinks(tokenclient INTEGER, orders orderList[]);
+-- Trigger
 DROP trigger IF EXISTS before_insert_clients on clients;
+
+-- Trigger Function
 DROP FUNCTION IF EXISTS before_insert_clients();
+
+-- Type
+DROP TYPE IF EXISTS orderList;
+
+
+/*
+*
+* Definition TYPE
+*
+*/
+
+/* Type for the couple (drinkname, qty) 
+CREATE TYPE orderList AS (drink Name, qty int);
+*/
+
+--Type for the couple (drinkid, qty)
+CREATE TYPE orderList AS (drink int, qty int);
 
 /*
 *
 *       Others functions
 *
 */
+
+
 
 /*
 *
@@ -51,6 +79,51 @@ CREATE OR REPLACE FUNCTION is_table_free(tableid INTEGER) RETURNS BOOLEAN AS $is
         RETURN FALSE;
     END;
 $is_table_free$ LANGUAGE plpgsql;
+
+
+
+
+/*
+*
+* @Pre :  
+* @Post : Return true if the table with tableid is free and the token is valid for this table
+*     if not false 
+*
+*/
+
+CREATE OR REPLACE FUNCTION is_valid_token(tokenclient INTEGER) RETURNS BOOLEAN AS $is_valid_token$
+    DECLARE
+    ispaid BOOLEAN;
+        tableID INTEGER;
+    BEGIN
+
+    IF tokenclient IS NULL THEN
+        RAISE EXCEPTION 'invalid token';
+    END IF; 
+    
+    -- Get table of client
+    SELECT clients.table INTO tableID FROM clients where token=tokenclient;
+
+    IF tableID IS NULL THEN
+        RETURN FALSE;
+    END IF;
+        
+        -- Verify if the table is free
+    IF is_table_free(tableID) IS FALSE THEN
+        -- Verify if the client has already paid
+        SELECT COUNT(*) = 1 INTO ispaid FROM payments WHERE token = tokenclient;
+        If ispaid IS FALSE THEN
+            RETURN TRUE;
+        END IF;
+    END IF;
+
+        RETURN FALSE;
+
+    END;
+$is_valid_token$ LANGUAGE plpgsql;
+
+
+
 
 /*
 *
@@ -125,6 +198,48 @@ CREATE OR REPLACE FUNCTION AcquireTable(code int) RETURNS int AS $AcquireTable$
     END;
 $AcquireTable$ LANGUAGE plpgsql;
 
+/*
+* FUNCTION : OrderDrinks
+* DESC: invoked when the user presses the “order” button in the ordering screen IN: a client token
+* IN: a list of (drink, qty) taken from the screen form
+* OUT: theuniquenumberofthecreatedorder
+* @PRE: theclienttokenisvalidandcorrespondstoanoccupiedtable
+* @POST: the order is created, its number is the one returned
+*
+*/
+
+CREATE OR REPLACE FUNCTION OrderDrinks(tokenclient int, orders orderList[]) RETURNS int AS $OrderDrinks$
+    DECLARE
+        orderid int;
+        cmd orderList;
+    BEGIN
+    
+        -- Verify token validity
+    IF is_valid_token(tokenclient) IS FALSE THEN
+        RAISE EXCEPTION 'Token is invalid';
+    END IF;
+    
+    -- Verify the order
+        IF orders IS NULL THEN
+            RAISE EXCEPTION 'you have to order anything';
+        END IF;
+
+        -- Create order in clients tables
+        INSERT INTO orders ("token", "ordertime") VALUES (tokenclient, now());
+
+    -- Create orderedDrink from orders
+    orderid := currval('orders_orderid_seq');
+        FOREACH cmd IN ARRAY orders
+        LOOP
+            RAISE NOTICE 'Client % ordered the Drink ID = % - % cl', tokenclient, cmd.drink, cmd.qty;
+            INSERT INTO orderedDrink("order", "drink", "qty") VALUES (orderid, cmd.drink, cmd.qty);
+
+        END LOOP;
+    
+        RETURN orderid;
+    END;
+$OrderDrinks$ LANGUAGE plpgsql;
+
 
 /*
 *
@@ -142,6 +257,8 @@ BEGIN
     SELECT AcquireTable(635614) INTO clientID;
     RAISE NOTICE 'value :%', clientID; 
     
+    SELECT OrderDrinks(clientID, ARRAY[(1,1),(3,4)] :: orderList[]) INTO clientOrder;
+    RAISE NOTICE 'orderclient %', clientOrder;
     /*
     * Autres tableid à tester 
     *
@@ -152,3 +269,4 @@ BEGIN
     RAISE NOTICE 'value :%', clientID; 
     */
 END $$;
+
