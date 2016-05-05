@@ -13,6 +13,19 @@ from django.utils import timezone
 ##############
 ### Utils ###
 ##############
+# Return the ticket as a string
+def ticketToString(ticket) :
+   totalAmount = ticket.pop(0)
+   header = '\t\t TheAutomatedCafe \t\t\n'
+   drinks = 'Qty\tDrink      \t\tPrice\tTotal\n'
+   for bill in ticket :
+      drink = str(bill['qty'])+'\t'+bill['name']+'\t\t'+str(bill['priceU'])+'\t'+str(bill['priceT'])+'\n'
+      drinks = drinks + drink
+   line ='--------------------------------------------\n'
+   total = '\t\t\tTotal to pay : '+str(totalAmount)
+ 
+   return header + drinks + line + total
+
 
 # A table is free if every tokens associated with a table is found in the payment table
 def freeTable(tableid) :
@@ -69,7 +82,7 @@ def acquireTable(codeBar) :
 	   if freeTable(tableID): # The table is free, we can issue a new token
 	      client = Client(tableid_id=tableID) 
 	      client.save() #INSERT INTO client (id, tableid_id) VALUES (id, tableID)
-	      print('Hello dear customer, please make an order')
+	      print('Hello dear customer, please make an order.')
 	      return client.id
 	   else: # The table is not free !
 	      raise ValueError('This table is occupied, please find an other table')
@@ -87,6 +100,7 @@ def orderDrinks(token, newOrder): #newOrder = [{'drink':theDrink, 'qty':theQty},
          drinkID = client[0]['id']
          orderedDrink = Ordereddrink(orderid_id=order.id, drinkid_id=drinkID, qty=myOrder['qty'])
          orderedDrink.save()
+      print("Your order is placed.")
       return order.id
    else :
       raise ValueError('The token is not a valid token to order drinks !')
@@ -121,6 +135,7 @@ def payTable(token, amount) :
          clientToken = Client.objects.get(id=token) # "Client" instance (foreign key)
          payment = Payment(amountpaid=amount, token=clientToken)
          payment.save()
+         print('Thank you dear client, hope to see you soon !')
       else :
          raise ValueError('The amount should be equal or greater to amount due for that table !')
    else :

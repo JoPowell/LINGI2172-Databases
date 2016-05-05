@@ -11,6 +11,7 @@ Tables.objects.all().delete()
 Client.objects.all().delete()
 Drink.objects.all().delete()
 Orders.objects.all().delete()
+Drink.objects.all().delete()
 Ordereddrink.objects.all().delete()
 
 #Fill table Tables
@@ -32,7 +33,7 @@ for i in tableIDs:
 	
 #Fill table Drink
 prices = [2.75, 3.60, 2.00, 1.23, 3.27, 1.50]
-names = ['Coffee', 'Milk-shake', 'Beer', 'Water', 'Tea', 'Sparkling water']
+names = ['Black Coffee', 'Milk-shake', 'Beer pressure', 'Still Water', 'Green Tea', 'Sparkling Water']
 descriptions = ['Brewed drink prepared from roasted coffee beans, which are the seeds of berries from the Coffea plant.','Cold beverage which is usually made from milk, ice cream, or iced milk, and flavorings or sweeteners such as butterscotch, caramel sauce, chocolate sauce, or fruit syrup.', 'The production of beer is called brewing, which involves the fermentation of starches, mainly derived from cereal grains most commonly malted barley', 'Transparent fluid which forms the world s streams, lakes, oceans and rain, and is the major constituent of the fluids of organisms.', 'Aromatic beverage commonly prepared by pouring hot or boiling water over cured leaves of the Camellia sinensis.', 'Sparkling water','Water into which carbon dioxide gas under pressure has been dissolved.']
 
 for i in range(0, len(prices)):
@@ -59,11 +60,11 @@ orderID1 = Orders.objects.get(ordertime=date1)
 orderID2 = Orders.objects.get(ordertime=date2)
 orderID3 = Orders.objects.get(ordertime=date3)
 orderID4 = Orders.objects.get(ordertime=date4)
-coffeeID = Drink.objects.get(name='Coffee')
+coffeeID = Drink.objects.get(name='Black Coffee')
 milkshakeID = Drink.objects.get(name='Milk-shake')
-beerID = Drink.objects.get(name='Beer')
-waterID = Drink.objects.get(name='Water')
-teaID = Drink.objects.get(name='Tea')
+beerID = Drink.objects.get(name='Beer pressure')
+waterID = Drink.objects.get(name='Still Water')
+teaID = Drink.objects.get(name='Green Tea')
 ordersIDs = [orderID1, orderID2, orderID3, orderID4, orderID4]
 drinkIDs = [milkshakeID, coffeeID, teaID, beerID, waterID]
 qtys = [1, 1, 5, 3, 1]
