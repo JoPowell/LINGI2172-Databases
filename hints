@@ -1,18 +1,14 @@
-You need to have python and postgres installed on your computer
-
+Connect to PostgreSQL database
 
 $ psql -d M4Database -h localhost -p 5432 -U postgres
 
-$ sudo apt-get build-dep python-psycopg2
+
+Step 3
 
 $ pip3 install django
-$ pip3 install psycopg2
 $ pip3 install django-query-builder
 
-$ django-admin.py startproject TheAutomatedCafe
+
+$ python3 manage.py makemigrations TheAutomatedCafe
 
 $ python3 manage.py migrate
-$ python manage.py createsuperuser
-$ python3 manage.py runserver
-
-$ export DJANGO_SETTINGS_MODULE=TheAutomatedCafe.settings
