@@ -31,9 +31,9 @@ for i in tableIDs:
 	client.save()
 	
 #Fill table Drink
-prices = [2.75, 3.60, 2.00, 1.23, 3.27]
-names = ['Coffee', 'Milk-shake', 'Beer', 'Water', 'Tea']
-descriptions = ['Brewed drink prepared from roasted coffee beans, which are the seeds of berries from the Coffea plant.','Cold beverage which is usually made from milk, ice cream, or iced milk, and flavorings or sweeteners such as butterscotch, caramel sauce, chocolate sauce, or fruit syrup.', 'The production of beer is called brewing, which involves the fermentation of starches, mainly derived from cereal grains most commonly malted barley', 'Transparent fluid which forms the world s streams, lakes, oceans and rain, and is the major constituent of the fluids of organisms.', 'Aromatic beverage commonly prepared by pouring hot or boiling water over cured leaves of the Camellia sinensis.']
+prices = [2.75, 3.60, 2.00, 1.23, 3.27, 1.50]
+names = ['Coffee', 'Milk-shake', 'Beer', 'Water', 'Tea', 'Sparkling water']
+descriptions = ['Brewed drink prepared from roasted coffee beans, which are the seeds of berries from the Coffea plant.','Cold beverage which is usually made from milk, ice cream, or iced milk, and flavorings or sweeteners such as butterscotch, caramel sauce, chocolate sauce, or fruit syrup.', 'The production of beer is called brewing, which involves the fermentation of starches, mainly derived from cereal grains most commonly malted barley', 'Transparent fluid which forms the world s streams, lakes, oceans and rain, and is the major constituent of the fluids of organisms.', 'Aromatic beverage commonly prepared by pouring hot or boiling water over cured leaves of the Camellia sinensis.', 'Sparkling water','Water into which carbon dioxide gas under pressure has been dissolved.']
 
 for i in range(0, len(prices)):
 	drink = Drink(price = prices[i], name = names[i], description = descriptions[i])

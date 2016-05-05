@@ -10,7 +10,7 @@ INSERT INTO drink ("drinkID", "price", "name", "description") VALUES
   (3, 2.00, 'Beer', 'The production of beer is called brewing, which involves the fermentation of starches, mainly derived from cereal grains—most commonly malted barley'),
   (4, 1.23, 'Water', 'Transparent fluid which forms the world s streams, lakes, oceans and rain, and is the major constituent of the fluids of organisms.'),
   (5, 3.27, 'Tea', 'Aromatic beverage commonly prepared by pouring hot or boiling water over cured leaves of the Camellia sinensis.');
-
+  (6, 1.50, 'Sparkling water','Water into which carbon dioxide gas under pressure has been dissolved.');
 INSERT INTO orders ("orderID", "token", "orderTime") VALUES
   (1, 478, '1999-01-08 04:05:06'),
   (2, 478, '1999-02-14 04:55:15'),
