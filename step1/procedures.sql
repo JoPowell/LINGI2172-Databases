@@ -36,6 +36,20 @@ CREATE TYPE orderList AS (drink int, qty int);
 
 /*
 *
+*   Definition view
+*
+*
+*/
+
+-- All drink no payed
+CREATE VIEW bill AS
+SELECT clients.token,orders.orderid, ordereddrink.drink, ordereddrink.qty, drinks.price 
+FROM clients, orders,ordereddrink, drinks 
+WHERE clients.token = orders.token AND is_valid_token(orders.token) 
+AND orders.orderid = ordereddrink.order AND ordereddrink.drink = drinks.drinkid
+
+/*
+*
 *       Others functions
 *
 */
@@ -241,6 +255,95 @@ CREATE OR REPLACE FUNCTION OrderDrinks(tokenclient int, orders orderList[]) RETU
 $OrderDrinks$ LANGUAGE plpgsql;
 
 
+/*DROP FUNCTION IF EXISTs IssueTicket(tokenclient INTEGER);
+
+
+* FUNCTION : IssueTicket
+* DESC : Invoked when the user asks for looking at the table summary and due amount
+* @OUT : The ticket to be paid, with a summary of orders and total amount to pay
+* @PRE : The client token is valid and corresponds to an occupied table
+* @POST: Issued ticket corresponds to all (and only) ordered drinks at that table
+
+
+CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER) RETURNS float AS $IssueTicket$
+    DECLARE
+    row_bill ROW("name" name, totqty INTEGER);
+        total float;
+    BEGIN
+        -- Verify token
+        IF is_valid_token(tokenclient) IS FALSE THEN
+            RAISE EXCEPTION 'The client token % is INVALID', tokenclient;
+        END IF;
+
+    SELECT SUM(bill.price * bill.qty) INTO total FROM bill WHERE bill.token = tokenclient;
+
+    IF total IS NULL THEN
+        RAISE EXCEPTION 'The client token % has not drink', tokenclient;
+        END IF;
+        /*SELECT drinks.name, billing.totqty INTO billing_drink
+        FROM drinks, (SELECT bill.drink,SUM(bill.qty) AS totqty FROM bill WHERE bill.token = tokenclient GROUP BY bill.drink) AS billing 
+        where billing.drink=drinks.drinkid;
+    
+
+        FOR EACH row_bill IN         
+        SELECT drinks.name, billing.totqty 
+        FROM drinks, (SELECT bill.drink,SUM(bill.qty) AS totqty FROM bill WHERE bill.token = tokenclient GROUP BY bill.drink) AS billing 
+        where billing.drink=drinks.drinkid;
+        LOOP
+        RAISE NOTICE 'boisson : %, Quantité : %', drinks.name, billing.totqty; 
+        END LOOP;
+    
+        RAISE NOTICE '>< SUBTOTAL %', total;
+        -- CLOSE curs;
+    RETURN total;
+       -- RETURN array_append(out, ('TOTAL', tot) :: text);
+    END;
+$IssueTicket$ LANGUAGE plpgsql;
+*/
+
+
+
+
+/*
+* FUNCTION : PayTable
+* DESC: invoked by the smartphone on confirmation from the payment gateway (we
+*            ignore security on purpose here; a real app would never expose such an
+*            API, of course). IN: a client token IN: an amount paid
+* OUT:
+* PRE: the client token is valid and corresponds to an occupied table
+* PRE: the input amount is greater or equal to the amount due for that table 
+* POST: the table is released
+* POST: the client token can no longer be used for ordering
+*/
+
+DROP FUNCTION PayTable(tokenclient int, paid float);
+CREATE OR REPLACE FUNCTION PayTable(tokenclient int, paid float) RETURNS VOID AS $PayTable$
+     DECLARE
+    amountdue float;
+    BEGIN
+
+        -- Verify tokenclient 
+        IF is_valid_token(tokenclient) IS FALSE THEN
+        RAISE EXCEPTION 'token % is invalid', tokenclient;
+        END IF;
+
+    -- Verify if good paid
+    SELECT SUM(bill.price * bill.qty) INTO amountdue FROM bill WHERE bill.token = tokenclient;
+
+    IF amountdue > paid IS TRUE THEN
+        RAISE EXCEPTION 'you have not paid enough, you must pay at least %', amountdue;
+    END IF;
+    
+        -- RELEASE TABLE (If the client as paid, the table is considered as released)
+        INSERT INTO payments ("token", "amountPaid") VALUES (tokenclient, paid);
+
+        RETURN;
+    END;
+$PayTable$ LANGUAGE plpgsql;
+
+
+
+
 /*
 *
 *
@@ -253,6 +356,8 @@ DO $$
 DECLARE
     clientID int;
     clientOrder int;
+        clientID1 int;
+    clientOrder1 int;
 BEGIN
     SELECT AcquireTable(635614) INTO clientID;
     RAISE NOTICE 'value :%', clientID; 
@@ -267,6 +372,15 @@ BEGIN
     
     SELECT AcquireTable(548961) INTO clientID;
     RAISE NOTICE 'value :%', clientID; 
+
     */
+    PERFORM paytable(clientID,100);
+
+        SELECT AcquireTable(635614) INTO clientID1;
+    RAISE NOTICE 'value :%', clientID1; 
+    
+    SELECT OrderDrinks(clientID1, ARRAY[(1,1),(3,4)] :: orderList[]) INTO clientOrder1;
+    RAISE NOTICE 'orderclient %', clientOrder1;
+        PERFORM paytable(clientID1,100);
 END $$;
 
