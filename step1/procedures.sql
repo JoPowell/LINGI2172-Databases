@@ -268,42 +268,31 @@ $OrderDrinks$ LANGUAGE plpgsql;
 * @POST: Issued ticket corresponds to all (and only) ordered drinks at that table
 */
 
-CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER) RETURNS float AS $IssueTicket$
+
+CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount int, OUT listorder orderlist[])  AS $$
     DECLARE
-    row_bill ROW("name" name, totqty INTEGER);
-        total float;
+        bill_record record;
     BEGIN
-        -- Verify token
+            -- Verify token
         IF is_valid_token(tokenclient) IS FALSE THEN
             RAISE EXCEPTION 'The client token % is INVALID', tokenclient;
         END IF;
 
-    SELECT SUM(bill.price * bill.qty) INTO total FROM bill WHERE bill.token = tokenclient;
+    SELECT SUM(bill.price * bill.qty) INTO total_amount FROM bill WHERE bill.token = tokenclient;
 
-    IF total IS NULL THEN
+    IF total_amount IS NULL THEN
         RAISE EXCEPTION 'The client token % has not drink', tokenclient;
-        END IF;
-        /*SELECT drinks.name, billing.totqty INTO billing_drink
-        FROM drinks, (SELECT bill.drink,SUM(bill.qty) AS totqty FROM bill WHERE bill.token = tokenclient GROUP BY bill.drink) AS billing 
-        where billing.drink=drinks.drinkid;
-    
+    END IF;
 
-        FOR EACH row_bill IN         
-        SELECT drinks.name, billing.totqty 
-        FROM drinks, (SELECT bill.drink,SUM(bill.qty) AS totqty FROM bill WHERE bill.token = tokenclient GROUP BY bill.drink) AS billing 
-        where billing.drink=drinks.drinkid;
-        LOOP
-        RAISE NOTICE 'boisson : %, Quantité : %', drinks.name, billing.totqty; 
-        END LOOP;
-    
-        RAISE NOTICE '>< SUBTOTAL %', total;
-        -- CLOSE curs;
-    RETURN total;
-       -- RETURN array_append(out, ('TOTAL', tot) :: text);
+    -- Create list order
+    listorder = NULL;
+    FOR bill_record in SELECT bill.drink, SUM(bill.qty) as qty from bill where bill.token = tokenclient group by bill.drink LOOP
+    RAISE NOTICE 'add list :(%,%)', bill_record.drink, bill_record.qty;
+    listorder  = listorder || ARRAY[(bill_record.drink,bill_record.qty)] :: orderlist[];
+    END LOOP;
+    RAISE NOTICE 'orderlist : %', listorder;
     END;
-$IssueTicket$ LANGUAGE plpgsql;
-
-
+$$ LANGUAGE plpgsql;
 
 
 
@@ -385,5 +374,7 @@ BEGIN
     SELECT OrderDrinks(clientID1, ARRAY[(1,1),(3,4)] :: orderList[]) INTO clientOrder1;
     RAISE NOTICE 'orderclient %', clientOrder1;
         PERFORM paytable(clientID1,100);
+    SELECT * FROM IssueTicket(client) INTO amount, listorder;
+    RAISE NOTICE 'amount : % € listorder : %', amount, listorder;
 END $$;
 
