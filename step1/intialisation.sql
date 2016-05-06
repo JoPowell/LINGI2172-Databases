@@ -6,6 +6,8 @@ DELETE FROM tables CASCADE;
 DELETE FROM drinks CASCADE;
 
 ALTER SEQUENCE clients_token_seq RESTART;
+ALTER SEQUENCE orders_orderid_seq RESTART;
+ALTER SEQUENCE payments_paymentid_seq RESTART;
 
 INSERT INTO tables ("tableid", "codebar") VALUES
   (1, 548961), (2,736894), (3, 635614);

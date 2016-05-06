@@ -11,6 +11,9 @@ DROP FUNCTION IF EXISTS is_valid_token(tokenclient INTEGER);
 -- Senario Function
 DROP FUNCTION IF EXISTS AcquireTable(code INTEGER);
 DROP FUNCTION IF EXISTS OrderDrinks(tokenclient INTEGER, orders orderList[]);
+DROP FUNCTION IF EXISTS IssueTicket(tokenclient INTEGER);
+DROP FUNCTION IF EXISTS PayTable(tokenclient INTEGER, paid float);
+
 -- Trigger
 DROP trigger IF EXISTS before_insert_clients on clients;
 
@@ -255,15 +258,15 @@ CREATE OR REPLACE FUNCTION OrderDrinks(tokenclient int, orders orderList[]) RETU
 $OrderDrinks$ LANGUAGE plpgsql;
 
 
-/*DROP FUNCTION IF EXISTs IssueTicket(tokenclient INTEGER);
 
 
+/*
 * FUNCTION : IssueTicket
 * DESC : Invoked when the user asks for looking at the table summary and due amount
 * @OUT : The ticket to be paid, with a summary of orders and total amount to pay
 * @PRE : The client token is valid and corresponds to an occupied table
 * @POST: Issued ticket corresponds to all (and only) ordered drinks at that table
-
+*/
 
 CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER) RETURNS float AS $IssueTicket$
     DECLARE
@@ -299,7 +302,7 @@ CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER) RETURNS float AS $Is
        -- RETURN array_append(out, ('TOTAL', tot) :: text);
     END;
 $IssueTicket$ LANGUAGE plpgsql;
-*/
+
 
 
 
