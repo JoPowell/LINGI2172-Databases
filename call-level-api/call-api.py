@@ -55,6 +55,7 @@ print(order)
 
 cur.callproc('PayTable', [token, '3.23'])
 
+conn.commit()
 
 #####################  Close donnection to the database #####################
 
