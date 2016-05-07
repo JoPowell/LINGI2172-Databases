@@ -1,4 +1,4 @@
-/*
+﻿/*
 *
 *   Reset 
 *
@@ -6,7 +6,7 @@
 
 -- Function
 DROP FUNCTION IF EXISTS is_table_free(tableid INTEGER);
-DROP FUNCTION IF EXISTS is_valid_token(tokenclient INTEGER);
+DROP FUNCTION IF EXISTS is_valid_token(tokenclient INTEGER) CASCADE;
 
 -- Senario Function
 DROP FUNCTION IF EXISTS AcquireTable(code INTEGER);
@@ -22,7 +22,11 @@ DROP FUNCTION IF EXISTS before_insert_clients();
 
 -- Type
 DROP TYPE IF EXISTS orderList;
+DROP TYPE IF EXISTS ordernameList;
 
+-- VIEW
+
+DROP VIEW IF EXISTS bill;
 
 /*
 *
@@ -34,22 +38,14 @@ DROP TYPE IF EXISTS orderList;
 CREATE TYPE orderList AS (drink Name, qty int);
 */
 
+CREATE TYPE ordernameList AS (drinkname NAME, qty int);
+
+
 --Type for the couple (drinkid, qty)
 CREATE TYPE orderList AS (drink int, qty int);
 
-/*
-*
-*   Definition view
-*
-*
-*/
 
--- All drink no payed
-CREATE VIEW bill AS
-SELECT clients.token,orders.orderid, ordereddrink.drink, ordereddrink.qty, drinks.price 
-FROM clients, orders,ordereddrink, drinks 
-WHERE clients.token = orders.token AND is_valid_token(orders.token) 
-AND orders.orderid = ordereddrink.order AND ordereddrink.drink = drinks.drinkid
+
 
 /*
 *
@@ -67,8 +63,6 @@ AND orders.orderid = ordereddrink.order AND ordereddrink.drink = drinks.drinkid
 * Algo : The table is free if the number of client sitting at the table equals the number of payment at the table
 *
 */
-
-
 CREATE OR REPLACE FUNCTION is_table_free(tableid INTEGER) RETURNS BOOLEAN AS $is_table_free$
     DECLARE
         number_client_payed int;
@@ -107,7 +101,6 @@ $is_table_free$ LANGUAGE plpgsql;
 *     if not false 
 *
 */
-
 CREATE OR REPLACE FUNCTION is_valid_token(tokenclient INTEGER) RETURNS BOOLEAN AS $is_valid_token$
     DECLARE
     ispaid BOOLEAN;
@@ -148,7 +141,6 @@ $is_valid_token$ LANGUAGE plpgsql;
 *        Checking function data before insert  (TRIGGER)
 *
 */
-
 CREATE FUNCTION before_insert_clients() RETURNS trigger AS $before_insert_clients$
     BEGIN
         -- Check tableID
@@ -161,21 +153,40 @@ CREATE FUNCTION before_insert_clients() RETURNS trigger AS $before_insert_client
             RAISE EXCEPTION 'The table % is not free',New.table;
         END IF;
 
-        -- génération d'un nouveau token avec serial
-
 
         RETURN NEW;
     END;
 $before_insert_clients$ LANGUAGE plpgsql;
+
+
+
 
 /*
 * 
 *       Checking : Trigger BEFORE of INSERT data
 * 
 */
-
 CREATE TRIGGER before_insert_clients BEFORE INSERT ON clients
     FOR EACH ROW EXECUTE PROCEDURE before_insert_clients();
+
+
+
+
+/*
+*
+*   Definition view
+*
+*
+*/
+
+-- All drink no payed
+CREATE VIEW bill AS
+SELECT clients.token, ordereddrink.drink, ordereddrink.qty, drinks.price, drinks.name 
+FROM clients, orders,ordereddrink, drinks 
+WHERE clients.token = orders.token AND is_valid_token(orders.token) 
+AND orders.orderid = ordereddrink.order AND ordereddrink.drink = drinks.drinkid;
+
+
 
 
 /*
@@ -194,26 +205,28 @@ CREATE TRIGGER before_insert_clients BEFORE INSERT ON clients
 * @POST: The table is no longer free
 * @POST: Issued token can be used for ordering drinks
 */
-
 CREATE OR REPLACE FUNCTION AcquireTable(code int) RETURNS int AS $AcquireTable$
     DECLARE
-        tablechoose INTEGER;
+        tableselected INTEGER;
     BEGIN
         
-        SELECT tableid INTO tablechoose FROM tables WHERE codebar = code;
+        SELECT tableid INTO tableselected FROM tables WHERE codebar = code;
 
-        IF tablechoose IS NULL THEN
+        IF tableselected IS NULL THEN
             RAISE EXCEPTION 'the table with the code bar % not exist',codebar;
         END IF;
 
         
-        INSERT INTO clients ("table") VALUES (tablechoose);
+        INSERT INTO clients ("table") VALUES (tableselected);
 
         -- RETURN the client token
         RETURN currval('clients_token_seq');
 
     END;
 $AcquireTable$ LANGUAGE plpgsql;
+
+
+
 
 /*
 * FUNCTION : OrderDrinks
@@ -224,7 +237,6 @@ $AcquireTable$ LANGUAGE plpgsql;
 * @POST: the order is created, its number is the one returned
 *
 */
-
 CREATE OR REPLACE FUNCTION OrderDrinks(tokenclient int, orders orderList[]) RETURNS int AS $OrderDrinks$
     DECLARE
         orderid int;
@@ -248,7 +260,7 @@ CREATE OR REPLACE FUNCTION OrderDrinks(tokenclient int, orders orderList[]) RETU
     orderid := currval('orders_orderid_seq');
         FOREACH cmd IN ARRAY orders
         LOOP
-            RAISE NOTICE 'Client % ordered the Drink ID = % - % cl', tokenclient, cmd.drink, cmd.qty;
+            RAISE NOTICE 'Client % ordered the Drink ID = %  X %', tokenclient, cmd.drink, cmd.qty;
             INSERT INTO orderedDrink("order", "drink", "qty") VALUES (orderid, cmd.drink, cmd.qty);
 
         END LOOP;
@@ -267,9 +279,7 @@ $OrderDrinks$ LANGUAGE plpgsql;
 * @PRE : The client token is valid and corresponds to an occupied table
 * @POST: Issued ticket corresponds to all (and only) ordered drinks at that table
 */
-
-
-CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount int, OUT listorder orderlist[])  AS $$
+CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount int, OUT listorder ordernamelist[])  AS $$
     DECLARE
         bill_record record;
     BEGIN
@@ -286,13 +296,14 @@ CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount int
 
     -- Create list order
     listorder = NULL;
-    FOR bill_record in SELECT bill.drink, SUM(bill.qty) as qty from bill where bill.token = tokenclient group by bill.drink LOOP
-    RAISE NOTICE 'add list :(%,%)', bill_record.drink, bill_record.qty;
-    listorder  = listorder || ARRAY[(bill_record.drink,bill_record.qty)] :: orderlist[];
+    FOR bill_record in SELECT bill.name, SUM(bill.qty) as qty from bill where bill.token = tokenclient group by bill.name LOOP
+    RAISE NOTICE 'add list :(%,%)', bill_record.name, bill_record.qty;
+    listorder  = listorder || ARRAY[(bill_record.name,bill_record.qty)] :: ordernamelist[];
     END LOOP;
     RAISE NOTICE 'orderlist : %', listorder;
     END;
 $$ LANGUAGE plpgsql;
+
 
 
 
@@ -307,8 +318,6 @@ $$ LANGUAGE plpgsql;
 * POST: the table is released
 * POST: the client token can no longer be used for ordering
 */
-
-DROP FUNCTION PayTable(tokenclient int, paid float);
 CREATE OR REPLACE FUNCTION PayTable(tokenclient int, paid float) RETURNS VOID AS $PayTable$
      DECLARE
     amountdue float;
@@ -334,47 +343,4 @@ CREATE OR REPLACE FUNCTION PayTable(tokenclient int, paid float) RETURNS VOID AS
 $PayTable$ LANGUAGE plpgsql;
 
 
-
-
-/*
-*
-*
-* Scénario test 
-*
-*
-*/
-
-DO $$
-DECLARE
-    clientID int;
-    clientOrder int;
-        clientID1 int;
-    clientOrder1 int;
-BEGIN
-    SELECT AcquireTable(635614) INTO clientID;
-    RAISE NOTICE 'value :%', clientID; 
-    
-    SELECT OrderDrinks(clientID, ARRAY[(1,1),(3,4)] :: orderList[]) INTO clientOrder;
-    RAISE NOTICE 'orderclient %', clientOrder;
-    /*
-    * Autres tableid à tester 
-    *
-    SELECT AcquireTable(736894) INTO clientID;
-    RAISE NOTICE 'value :%', clientID; 
-    
-    SELECT AcquireTable(548961) INTO clientID;
-    RAISE NOTICE 'value :%', clientID; 
-
-    */
-    PERFORM paytable(clientID,100);
-
-        SELECT AcquireTable(635614) INTO clientID1;
-    RAISE NOTICE 'value :%', clientID1; 
-    
-    SELECT OrderDrinks(clientID1, ARRAY[(1,1),(3,4)] :: orderList[]) INTO clientOrder1;
-    RAISE NOTICE 'orderclient %', clientOrder1;
-        PERFORM paytable(clientID1,100);
-    SELECT * FROM IssueTicket(client) INTO amount, listorder;
-    RAISE NOTICE 'amount : % € listorder : %', amount, listorder;
-END $$;
 

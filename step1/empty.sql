@@ -4,3 +4,8 @@ DELETE FROM orders CASCADE;
 DELETE FROM orderedDrink CASCADE;
 DELETE FROM drinks CASCADE;
 DELETE FROM payments CASCADE;
+
+ALTER SEQUENCE clients_token_seq RESTART;
+ALTER SEQUENCE orders_orderid_seq RESTART;
+ALTER SEQUENCE payments_paymentid_seq RESTART;
+
