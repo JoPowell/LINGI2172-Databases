@@ -6,6 +6,26 @@
 import psycopg2
 
 
+# Return the ticket as a string
+def ticketToString(ticket) :
+   totalAmount = ticket[0]
+   header = '\n\t TheAutomatedCafe \t\t\n\n'
+   drinks = 'Drink     \t\tQty\n\n'
+   drinkIter = ticket[1].split(',')
+   for i in range(0,len(drinkIter)) :
+      if ((i % 2) == 0) : # This is a name
+         name = drinkIter[i].split('(')[1]
+         drinks = drinks + name + '\t\t'
+      else : # This is a qty
+         qty = drinkIter[i].split(')')[0]
+         drinks = drinks + qty +'\n'
+   line ='---------------------------------\n'
+   total = '\t\tTotal to pay : '+str(totalAmount)+'\n'
+ 
+   return header + drinks + line + total
+
+
+
 ##################### Connection to the database #####################
 
 try:
@@ -22,38 +42,31 @@ cur = conn.cursor()
 cur.callproc('AcquireTable', [635614])
 
 token = cur.fetchone()[0]
-print(token)
 
 ################# Order spakling water ##################
 
 
 queryOrderOneSpaklingWater = "SELECT OrderDrinks("+str(token)+", ARRAY[('6',1)] :: orderList[]);"
-
+order = "SELECT OrderDrinks("+str(token)+", ARRAY[('4',1)] :: orderList[]);"
 
 cur.execute(queryOrderOneSpaklingWater)
+cur.execute(order)
 order = cur.fetchone()[0]
-print('order n°')
-print(order)
 
 #################### Looks bill ####################
 
 cur.callproc('IssueTicket', [token])
-bill = cur.fetchone()[0]
-
-print(bill)
-
+bill = cur.fetchone()
+print(ticketToString(bill))
 
 ############# Order sparkling water ##############
 
 cur.execute(queryOrderOneSpaklingWater)
 order = cur.fetchone()[0]
-print('order n°')
-print(order)
-
 
 ############# Pay and realese table ##############
 
-cur.callproc('PayTable', [token, '3.23'])
+cur.callproc('PayTable', [token, '4.23'])
 
 conn.commit()
 
@@ -61,5 +74,4 @@ conn.commit()
 
 cur.close()
 conn.close()
-
 

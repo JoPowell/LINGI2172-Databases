@@ -17,6 +17,6 @@ BEGIN
     
     SELECT OrderDrinks(client, ARRAY[(6,1)] :: orderList[]) INTO order;
     
-    PERFORM PayTable(client, 4);
+    PERFORM PayTable(client, 3);
 END; 
 $$ language plpgsql;
