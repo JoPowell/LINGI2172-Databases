@@ -14,6 +14,7 @@ except:
     print ("I am unable to connect to the database")
 
 
+
 cur = conn.cursor()
 
 
