@@ -74,7 +74,7 @@ for i in range(0, len(qtys)):
 	orderedDrink.save()
 
 #Fill table Payment
-tokens =  [token1, token2]
+tokens =  [token1, token2] # Client (token3) on table codebar 635614 is still using the table
 amountPaids = [6.35, 16.35]
 
 for i in range(0, len(tokens)):
