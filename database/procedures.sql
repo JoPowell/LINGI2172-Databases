@@ -279,7 +279,7 @@ $OrderDrinks$ LANGUAGE plpgsql;
 * @PRE : The client token is valid and corresponds to an occupied table
 * @POST: Issued ticket corresponds to all (and only) ordered drinks at that table
 */
-CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount int, OUT listorder ordernamelist[])  AS $$
+CREATE OR REPLACE FUNCTION IssueTicket(tokenclient INTEGER, OUT total_amount float, OUT listorder ordernamelist[])  AS $$
     DECLARE
         bill_record record;
     BEGIN
