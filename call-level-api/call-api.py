@@ -1,6 +1,6 @@
 #!/usr/bin/python2.4
+#coding: utf8
 #
-# Small script to show PostgreSQL and Pyscopg together
 #
 
 import psycopg2
@@ -28,10 +28,12 @@ def ticketToString(ticket) :
 
 ##################### Connection to the database #####################
 
+
 try:
     conn = psycopg2.connect("dbname='M4Database' user='postgres' host='localhost' password='16chalor9'")
 except:
-    print("I am unable to connect to the database")
+    print ("I am unable to connect to the database")
+
 
 
 cur = conn.cursor()
@@ -39,38 +41,49 @@ cur = conn.cursor()
 
 ##################### Acquire table #####################
 
+
 cur.callproc('AcquireTable', [635614])
 
 token = cur.fetchone()[0]
+
 
 ################# Order spakling water ##################
 
 
 queryOrderOneSpaklingWater = "SELECT OrderDrinks("+str(token)+", ARRAY[('6',1)] :: orderList[]);"
-order = "SELECT OrderDrinks("+str(token)+", ARRAY[('4',1)] :: orderList[]);"
 
 cur.execute(queryOrderOneSpaklingWater)
-cur.execute(order)
 order = cur.fetchone()[0]
+print('order n°{}'.format(order))
+
 
 #################### Looks bill ####################
 
+
 cur.callproc('IssueTicket', [token])
+
 bill = cur.fetchone()
 print(ticketToString(bill))
 
 ############# Order sparkling water ##############
 
+
 cur.execute(queryOrderOneSpaklingWater)
 order = cur.fetchone()[0]
 
+
 ############# Pay and realese table ##############
+
 
 cur.callproc('PayTable', [token, '4.23'])
 
+print('order n°{}'.format(order))
+
 conn.commit()
 
+
 #####################  Close donnection to the database #####################
+
 
 cur.close()
 conn.close()

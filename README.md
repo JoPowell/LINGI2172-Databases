@@ -6,6 +6,29 @@ Hints to connect to PostgreSQL database with default settings
 
 $ psql -d MyDatabaseName -h localhost -p 5432 -U postgres
 
+### Step 1 ###
+
+Open pgadmin
+
+Run Design.sql to create database
+
+Run initialisation.sql to populate the database with drinks and tables
+
+Run procedures.sql to create the trigger, view and storage procedure
+
+Run sparkling.sql to execute the basic scenario
+
+
+### Step 2 ###
+
+$ pip install psycopg2
+
+Update de dname, user, host, password with your database informations in the file call-api.py
+
+Run the script 
+
+$ python call-api.py
+
 
 ### Step 3 ###
 
